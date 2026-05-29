@@ -249,7 +249,7 @@ function onOpenCvReady() {
 // OpenCV.js 加载脚本
 (function() {
   const script = document.createElement("script");
-  script.src = "https://docs.opencv.org/4.8.0/opencv.js";  // 首次 ~8MB，加载后 SW 缓存秒开
+  script.src = "https://cdn.jsdelivr.net/npm/opencv.js@latest/opencv.js";  // jsdelivr CDN, 全球加速
   script.async = true;
   script.onload = () => {
     // OpenCV.js 设置回调后异步初始化，轮询等待
