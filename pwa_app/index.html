@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<title>🌱 出芽率检测</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#22c55e">
+<style>
+:root {
+  --bg:#0f1117; --panel:#1a1d27; --border:#2a2d3a; --text:#e0e0e0;
+  --text-dim:#888; --green:#4ade80; --blue:#60a5fa; --accent:#22c55e;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+  -webkit-tap-highlight-color:transparent;
+}
+.app{max-width:900px;margin:0 auto;padding:12px;}
+
+.header{text-align:center;padding:16px 0 10px;}
+.header h1{font-size:1.5em;font-weight:700;
+  background:linear-gradient(135deg,var(--green),var(--blue));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.subtitle{font-size:.78em;color:var(--text-dim);letter-spacing:2px;}
+
+.main{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+.panel-img{flex:1 1 360px;min-width:300px;}
+.panel-ctrl{flex:0 0 300px;padding:14px;display:flex;flex-direction:column;gap:10px;}
+
+.pnl-hdr{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid var(--border);}
+.pnl-hdr h3{font-size:.9em;color:var(--text-dim);}
+
+.img-wrap{position:relative;background:#0a0c12;min-height:280px;display:flex;align-items:center;justify-content:center;}
+.img-wrap img,.img-wrap canvas{max-width:100%;max-height:420px;display:block;}
+.img-wrap canvas{position:absolute;top:0;left:0;width:100%;height:100%;cursor:crosshair;}
+.placeholder{text-align:center;color:var(--text-dim);padding:50px 20px;}
+.placeholder .ph-icon{font-size:2.6em;margin-bottom:8px;}
+
+.actions{display:flex;gap:6px;padding:10px 14px;border-top:1px solid var(--border);flex-wrap:wrap;}
+.roi-info{display:flex;align-items:center;justify-content:space-between;padding:6px 14px;border-top:1px solid var(--border);background:var(--panel);font-size:.78em;color:#ffc800;}
+.roi-info strong{color:#ffc800;}
+
+.btn{padding:7px 14px;border:none;border-radius:8px;font-size:.82em;cursor:pointer;transition:all .2s;font-weight:500;color:var(--text);background:var(--border);}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn-pri{background:var(--accent);color:#000;font-weight:600}
+.btn-out{background:transparent;border:1px solid var(--border)}
+.btn-sm{padding:4px 10px;font-size:.75em}
+.btn.active{background:var(--accent);color:#000}
+.btn-roi.active{background:#ffc800;color:#000}
+.btn-grp{display:flex;gap:3px}
+
+.res-card{text-align:center;padding:14px;background:linear-gradient(135deg,#1a2a1a,#1a1d27);border-radius:10px;border:1px solid var(--border);}
+.rate-big{font-size:2.8em;font-weight:800;line-height:1.1;
+  background:linear-gradient(180deg,var(--green),#22c55e);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.rate-label{font-size:.8em;color:var(--text-dim);margin-bottom:8px;}
+.stats{display:flex;justify-content:center;gap:20px;}
+.stat{font-size:.78em;color:var(--text-dim);display:flex;align-items:center;gap:5px;}
+.stat strong{color:var(--text);}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+.dot.g{background:var(--green)}
+.dot.b{background:#d4a574}
+
+.params h4{font-size:.78em;color:var(--text-dim);margin:12px 0 6px;padding-top:8px;border-top:1px solid var(--border);}
+.params h4:first-child{border-top:none;margin-top:0}
+.slider-row{display:flex;align-items:center;gap:6px;font-size:.74em;margin:3px 0;}
+.slider-row label{width:62px;flex-shrink:0;color:var(--text-dim);}
+.range-wrap{flex:1;position:relative;height:22px;}
+.range-wrap input[type=range]{position:absolute;width:100%;top:5px;-webkit-appearance:none;appearance:none;background:transparent;pointer-events:none;}
+.range-wrap input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--border);border-radius:2px;}
+.range-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--green);border:2px solid #fff;pointer-events:auto;cursor:pointer;margin-top:-5px;}
+.range-wrap input[type=range]:last-child::-webkit-slider-thumb{background:var(--blue);}
+.single-range{flex:1;-webkit-appearance:none;appearance:none;height:3px;background:var(--border);border-radius:2px;}
+.single-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #fff;cursor:pointer;}
+.range-val{width:80px;font-size:.7em;color:var(--text-dim);text-align:right;flex-shrink:0;}
+.param-btns{display:flex;gap:6px;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);}
+
+.history{margin-top:14px;background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.hist-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.hist-hdr h3{font-size:.9em;color:var(--text-dim);}
+.chart-wrap{background:#11141c;border-radius:8px;padding:8px;margin-bottom:8px;max-height:200px;}
+.chart-wrap canvas{width:100%;height:160px;}
+.tbl-wrap{max-height:150px;overflow-y:auto;}
+#histTbl{width:100%;border-collapse:collapse;font-size:.75em;}
+#histTbl th,#histTbl td{padding:5px 8px;text-align:center;border-bottom:1px solid var(--border);}
+#histTbl th{color:var(--text-dim);font-weight:500;position:sticky;top:0;background:var(--panel);}
+
+.loader{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:99;justify-content:center;align-items:center;flex-direction:column;gap:12px;}
+.loader.show{display:flex}
+.loader .spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loader p{color:var(--text-dim);font-size:.85em;}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--accent);color:#000;padding:8px 20px;border-radius:20px;font-size:.85em;font-weight:600;z-index:100;opacity:0;transition:opacity .3s;}
+.toast.show{opacity:1}
+
+/* 密码弹窗 */
+.pw-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.75);z-index:200;justify-content:center;align-items:center;}
+.pw-overlay.show{display:flex}
+.pw-box{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:28px 24px;text-align:center;max-width:320px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.5);}
+.pw-box h3{font-size:1.1em;margin-bottom:4px}
+.pw-box p{font-size:.8em;color:var(--text-dim);margin-bottom:16px}
+.pw-box input{width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:#0a0c12;color:var(--text);font-size:1em;text-align:center;outline:none;display:block;}
+.pw-box input:focus{border-color:var(--green)}
+.pw-box input::placeholder{color:#555}
+.pw-box .pw-btns{display:flex;gap:8px;margin-top:14px}
+.pw-box .pw-btns button{flex:1}
+.pw-err{color:#f87171;font-size:.75em;margin-top:8px;min-height:18px}
+
+@media(max-width:640px){
+  .main{flex-direction:column}
+  .panel-ctrl{flex:1 1 auto}
+  .header h1{font-size:1.2em}
+  .rate-big{font-size:2.2em}
+  .slider-row label{width:50px;font-size:.7em}
+}
+
+/* OpenCV 加载状态 */
+#cv-status{text-align:center;padding:8px;font-size:.8em;color:var(--text-dim);border-bottom:1px solid var(--border);}
+#cv-status.done{color:var(--green)}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <div class="header">
+    <h1>🌱 出芽率智能检测</h1>
+    <div class="subtitle">
+      Germination Rate · PWA
+      <span id="userBadge" style="display:none;margin-left:8px;color:var(--green);font-size:.85em;">| 👤 <span id="userName"></span></span>
+      <a href="javascript:logout()" id="logoutLink" style="display:none;margin-left:8px;color:#f87171;font-size:.75em;text-decoration:none;">退出</a>
+    </div>
+  </div>
+
+  <div id="cv-status">⏳ 正在加载 OpenCV.js 引擎...</div>
+
+  <div class="main" id="mainUI" style="opacity:0;pointer-events:none;">
+    <div class="panel panel-img">
+      <div class="pnl-hdr">
+        <h3 id="viewLabel">📷 检测结果</h3>
+        <div class="btn-grp">
+          <button class="btn btn-sm active" onclick="switchView('overlay')" id="btnOverlay">叠加</button>
+          <button class="btn btn-sm" onclick="switchView('mask')" id="btnMask">掩膜</button>
+        </div>
+      </div>
+      <div class="img-wrap" id="imgWrap">
+        <div class="placeholder" id="placeholder"><div class="ph-icon">📸</div><p>选择图片或拍照</p></div>
+        <img id="srcImg" style="display:none" alt="源图">
+        <canvas id="roiCvs" style="display:none"></canvas>
+      </div>
+      <div class="roi-info" id="roiInfo" style="display:none">
+        <span>📐 苗盘: <strong id="roiSize">未框选</strong></span>
+        <button class="btn btn-sm" onclick="clearROI()">✖ 清除</button>
+      </div>
+      <div class="actions">
+        <button class="btn btn-pri" onclick="pickImage()">📁 选图片</button>
+        <button class="btn btn-out" onclick="takePhoto()">📷 拍照</button>
+        <button class="btn btn-out btn-roi" id="btnROI" onclick="toggleROI()" disabled>📐 框选苗盘</button>
+        <button class="btn btn-pri" id="btnAnalyze" onclick="analyze()" disabled>🔍 分析</button>
+        <input type="file" id="fileInput" accept="image/*" hidden onchange="onFilePicked(event)">
+        <input type="file" id="camInput" accept="image/*" capture="environment" hidden onchange="onFilePicked(event)">
+      </div>
+    </div>
+
+    <div class="panel panel-ctrl">
+      <div class="res-card">
+        <div class="rate-big" id="rateDisplay">--</div><div class="rate-label">出芽率</div>
+        <div class="stats">
+          <div class="stat"><span class="dot g"></span>绿色 <strong id="greenPx">-</strong> px</div>
+          <div class="stat"><span class="dot b"></span>苗盘 <strong id="trayPx">-</strong> px</div>
+        </div>
+      </div>
+      <div class="params">
+        <h4>🎨 绿色 HSV</h4>
+        <div class="slider-row"><label>H</label><div class="range-wrap"><input type="range" id="gh0" min="0" max="179" value="28"><input type="range" id="gh1" min="0" max="179" value="85"></div><span class="range-val" id="ghV">28-85</span></div>
+        <div class="slider-row"><label>S</label><div class="range-wrap"><input type="range" id="gs0" min="0" max="255" value="25"><input type="range" id="gs1" min="0" max="255" value="180"></div><span class="range-val" id="gsV">25-180</span></div>
+        <div class="slider-row"><label>V</label><div class="range-wrap"><input type="range" id="gv0" min="0" max="255" value="45"><input type="range" id="gv1" min="0" max="255" value="220"></div><span class="range-val" id="gvV">45-220</span></div>
+        <h4>🟤 土壤 HSV</h4>
+        <div class="slider-row"><label>H</label><div class="range-wrap"><input type="range" id="sh0" min="0" max="179" value="0"><input type="range" id="sh1" min="0" max="179" value="32"></div><span class="range-val" id="shV">0-32</span></div>
+        <div class="slider-row"><label>S</label><div class="range-wrap"><input type="range" id="ss0" min="0" max="255" value="8"><input type="range" id="ss1" min="0" max="255" value="255"></div><span class="range-val" id="ssV">8-255</span></div>
+        <div class="slider-row"><label>V</label><div class="range-wrap"><input type="range" id="sv0" min="0" max="255" value="10"><input type="range" id="sv1" min="0" max="255" value="255"></div><span class="range-val" id="svV">10-255</span></div>
+        <h4>🔧 形态学</h4>
+        <div class="slider-row"><label>Erode</label><input type="range" id="erode" min="0" max="10" value="1" class="single-range"><span class="range-val" id="erodeV">1</span></div>
+        <div class="slider-row"><label>Dilate</label><input type="range" id="dilate" min="0" max="10" value="2" class="single-range"><span class="range-val" id="dilateV">2</span></div>
+        <div class="param-btns">
+          <button class="btn btn-sm" onclick="resetParams()">↺ 重置</button>
+          <button class="btn btn-sm" onclick="analyze()">🔄 应用</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history" id="histSection" style="opacity:0">
+    <div class="hist-hdr">
+      <h3>📊 检测记录</h3>
+      <div><button class="btn btn-sm" onclick="saveRecord()" id="btnSave" disabled>💾 保存</button>
+      <button class="btn btn-sm" onclick="exportCSV()">📥 导出CSV</button></div>
+    </div>
+    <div class="chart-wrap"><canvas id="chartCvs"></canvas></div>
+    <div class="tbl-wrap"><table id="histTbl"><thead><tr><th>时间</th><th>出芽率</th><th>绿色</th><th>苗盘</th></tr></thead><tbody></tbody></table></div>
+  </div>
+</div>
+
+<div class="loader" id="loader"><div class="spinner"></div><p id="loaderMsg">分析中...</p></div>
+<div class="toast" id="toast"></div>
+
+<!-- 登录/注册弹窗 -->
+<div class="pw-overlay" id="pwOverlay">
+  <div class="pw-box" id="pwBox">
+    <h3 id="pwTitle">🔐 登录</h3>
+    <p id="pwSub">输入账号密码查看检测结果</p>
+    <input type="text" id="pwUser" placeholder="用户名" maxlength="20" autocomplete="off">
+    <input type="password" id="pwPass" placeholder="密码" maxlength="30" autocomplete="off" style="margin-top:8px">
+    <div class="pw-err" id="pwErr"></div>
+    <div class="pw-btns">
+      <button class="btn btn-out" id="pwBtnAlt" onclick="toggleAuthMode()">注册新账号</button>
+      <button class="btn btn-pri" id="pwBtnOk" onclick="handleAuth()">登录</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 全局状态 ====================
+let srcImage = null;       // HTML Image 元素（原图）
+let srcMat = null;         // cv.Mat (RGBA)
+let lastResult = null;
+let currentView = "overlay";
+let roi = null;
+let roiMode = false;
+let roiStart = null;
+let imgScale = 1;          // 显示缩放比
+
+// ==================== OpenCV 加载 ====================
+function onOpenCvReady() {
+  document.getElementById("cv-status").textContent = "✅ OpenCV.js 就绪";
+  document.getElementById("cv-status").classList.add("done");
+  document.getElementById("mainUI").style.opacity = "1";
+  document.getElementById("mainUI").style.pointerEvents = "auto";
+  document.getElementById("histSection").style.opacity = "1";
+  bindSliders();
+  restoreAuth();
+  loadHistory();
+}
+
+// OpenCV.js 加载脚本
+(function() {
+  const script = document.createElement("script");
+  script.src = "https://docs.opencv.org/4.8.0/opencv.js";  // 首次 ~8MB，加载后 SW 缓存秒开
+  script.async = true;
+  script.onload = () => {
+    // OpenCV.js 设置回调后异步初始化，轮询等待
+    if (cv.getBuildInformation) { onOpenCvReady(); return; }
+    cv["onRuntimeInitialized"] = onOpenCvReady;
+    // 兜底轮询
+    let tries = 0;
+    const ival = setInterval(() => {
+      if (cv.Mat) { clearInterval(ival); onOpenCvReady(); }
+      if (++tries > 200) { clearInterval(ival);
+        document.getElementById("cv-status").textContent = "❌ OpenCV.js 加载失败，请刷新页面"; }
+    }, 200);
+  };
+  script.onerror = () => {
+    document.getElementById("cv-status").innerHTML = "❌ 网络不通，OpenCV.js 加载失败。<br>请确保已联网后刷新页面。";
+  };
+  document.head.appendChild(script);
+})();
+
+// ==================== 图片加载 ====================
+function pickImage() { document.getElementById("fileInput").click(); }
+function takePhoto() { document.getElementById("camInput").click(); }
+
+function onFilePicked(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    srcImage = img;
+    showImage(img);
+    clearROI();
+    document.getElementById("btnAnalyze").disabled = false;
+    document.getElementById("btnROI").disabled = false;
+    lastResult = null;
+    document.getElementById("rateDisplay").textContent = "--";
+    document.getElementById("greenPx").textContent = "-";
+    document.getElementById("trayPx").textContent = "-";
+    document.getElementById("btnSave").disabled = true;
+  };
+  img.src = URL.createObjectURL(file);
+}
+
+function showImage(img) {
+  const wrap = document.getElementById("imgWrap");
+  const srcImgEl = document.getElementById("srcImg");
+  const roiCvs = document.getElementById("roiCvs");
+  const ph = document.getElementById("placeholder");
+
+  srcImgEl.src = img.src;
+  srcImgEl.style.display = "block";
+  roiCvs.style.display = "block";
+  roiCvs.style.pointerEvents = "none";
+  ph.style.display = "none";
+
+  // 将图片转为 cv.Mat (RGBA)
+  srcImgEl.onload = () => {
+    roiCvs.width = srcImgEl.clientWidth;
+    roiCvs.height = srcImgEl.clientHeight;
+    imgScale = srcImgEl.clientWidth / srcImgEl.naturalWidth;
+    roiCvs.getContext("2d").clearRect(0, 0, roiCvs.width, roiCvs.height);
+
+    const tmpCvs = document.createElement("canvas");
+    tmpCvs.width = img.naturalWidth;
+    tmpCvs.height = img.naturalHeight;
+    tmpCvs.getContext("2d").drawImage(img, 0, 0);
+    if (srcMat) srcMat.delete();
+    srcMat = cv.imread(tmpCvs); // RGBA
+  };
+}
+
+// ==================== ROI 框选 ====================
+function toggleROI() {
+  roiMode = !roiMode;
+  const btn = document.getElementById("btnROI");
+  const cvs = document.getElementById("roiCvs");
+  if (roiMode) {
+    btn.classList.add("active"); btn.textContent = "📐 框选中...";
+    cvs.style.pointerEvents = "auto";
+  } else {
+    btn.classList.remove("active"); btn.textContent = "📐 框选苗盘";
+    clearROIRect();
+    cvs.style.pointerEvents = "none";
+  }
+}
+
+function clearROI() {
+  roi = null; roiMode = false;
+  const btn = document.getElementById("btnROI");
+  btn.classList.remove("active"); btn.textContent = "📐 框选苗盘";
+  document.getElementById("roiSize").textContent = "未框选";
+  document.getElementById("roiInfo").style.display = "none";
+  clearROIRect();
+  document.getElementById("roiCvs").style.pointerEvents = "none";
+}
+
+function clearROIRect() {
+  const cvs = document.getElementById("roiCvs");
+  cvs.getContext("2d").clearRect(0, 0, cvs.width, cvs.height);
+}
+
+document.getElementById("roiCvs").addEventListener("mousedown", (e) => {
+  if (!roiMode) return;
+  roiStart = { x: e.offsetX, y: e.offsetY };
+  e.preventDefault();
+});
+document.getElementById("roiCvs").addEventListener("mousemove", (e) => {
+  if (!roiMode || !roiStart) return;
+  clearROIRect();
+  const ctx = document.getElementById("roiCvs").getContext("2d");
+  const x = Math.min(roiStart.x, e.offsetX);
+  const y = Math.min(roiStart.y, e.offsetY);
+  const w = Math.abs(e.offsetX - roiStart.x);
+  const h = Math.abs(e.offsetY - roiStart.y);
+  ctx.strokeStyle = "#ffc800"; ctx.lineWidth = 2; ctx.setLineDash([6, 3]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = "rgba(255,200,0,0.08)"; ctx.fillRect(x, y, w, h);
+});
+document.getElementById("roiCvs").addEventListener("mouseup", (e) => {
+  if (!roiStart) return;
+  const x = Math.min(roiStart.x, e.offsetX);
+  const y = Math.min(roiStart.y, e.offsetY);
+  const w = Math.abs(e.offsetX - roiStart.x);
+  const h = Math.abs(e.offsetY - roiStart.y);
+  roiStart = null;
+  if (w > 10 && h > 10) {
+    roi = {
+      x: Math.round(x / imgScale), y: Math.round(y / imgScale),
+      w: Math.round(w / imgScale), h: Math.round(h / imgScale)
+    };
+    document.getElementById("roiSize").textContent = `${roi.w}×${roi.h} (${(roi.w*roi.h).toLocaleString()} px²)`;
+    document.getElementById("roiInfo").style.display = "flex";
+  }
+});
+
+// 触摸事件 (手机)
+document.getElementById("roiCvs").addEventListener("touchstart", (e) => {
+  if (!roiMode) return;
+  const t = e.touches[0]; const r = e.target.getBoundingClientRect();
+  roiStart = { x: t.clientX - r.left, y: t.clientY - r.top };
+  e.preventDefault();
+}, {passive: false});
+document.getElementById("roiCvs").addEventListener("touchmove", (e) => {
+  if (!roiMode || !roiStart) return;
+  e.preventDefault();
+  const t = e.touches[0]; const r = e.target.getBoundingClientRect();
+  clearROIRect();
+  const ctx = document.getElementById("roiCvs").getContext("2d");
+  const mx = t.clientX - r.left, my = t.clientY - r.top;
+  const x = Math.min(roiStart.x, mx), y = Math.min(roiStart.y, my);
+  const w = Math.abs(mx - roiStart.x), h = Math.abs(my - roiStart.y);
+  ctx.strokeStyle = "#ffc800"; ctx.lineWidth = 2; ctx.setLineDash([6, 3]);
+  ctx.strokeRect(x, y, w, h);
+  ctx.fillStyle = "rgba(255,200,0,0.08)"; ctx.fillRect(x, y, w, h);
+}, {passive: false});
+document.getElementById("roiCvs").addEventListener("touchend", (e) => {
+  if (!roiStart) return;
+  const t = e.changedTouches[0]; const r = e.target.getBoundingClientRect();
+  const mx = t.clientX - r.left, my = t.clientY - r.top;
+  const x = Math.min(roiStart.x, mx), y = Math.min(roiStart.y, my);
+  const w = Math.abs(mx - roiStart.x), h = Math.abs(my - roiStart.y);
+  roiStart = null;
+  if (w > 10 && h > 10) {
+    roi = {
+      x: Math.round(x / imgScale), y: Math.round(y / imgScale),
+      w: Math.round(w / imgScale), h: Math.round(h / imgScale)
+    };
+    document.getElementById("roiSize").textContent = `${roi.w}×${roi.h} (${(roi.w*roi.h).toLocaleString()} px²)`;
+    document.getElementById("roiInfo").style.display = "flex";
+  }
+});
+
+// ==================== 核心检测 (OpenCV.js) ====================
+function detect() {
+  if (!srcMat || srcMat.empty()) return null;
+
+  let crop = srcMat;
+  let roiArea = srcMat.cols * srcMat.rows;
+
+  if (roi) {
+    const rx = Math.max(0, roi.x), ry = Math.max(0, roi.y);
+    const rw = Math.min(roi.w, srcMat.cols - rx);
+    const rh = Math.min(roi.h, srcMat.rows - ry);
+    if (rw <= 0 || rh <= 0) { roi = null; }
+    else {
+      crop = srcMat.roi(new cv.Rect(rx, ry, rw, rh));
+      roiArea = rw * rh;
+    }
+  }
+
+  // RGBA → RGB → HSV
+  const rgb = new cv.Mat();
+  cv.cvtColor(crop, rgb, cv.COLOR_RGBA2RGB);
+  const hsv = new cv.Mat();
+  cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV);
+  rgb.delete();
+
+  // 读取参数
+  const gh0 = +document.getElementById("gh0").value, gh1 = +document.getElementById("gh1").value;
+  const gs0 = +document.getElementById("gs0").value, gs1 = +document.getElementById("gs1").value;
+  const gv0 = +document.getElementById("gv0").value, gv1 = +document.getElementById("gv1").value;
+  const sh0 = +document.getElementById("sh0").value, sh1 = +document.getElementById("sh1").value;
+  const ss0 = +document.getElementById("ss0").value, ss1 = +document.getElementById("ss1").value;
+  const sv0 = +document.getElementById("sv0").value, sv1 = +document.getElementById("sv1").value;
+  const erodeK = +document.getElementById("erode").value;
+  const dilateK = +document.getElementById("dilate").value;
+
+  const gLow  = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [gh0, gs0, gv0, 0]);
+  const gHigh = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [gh1, gs1, gv1, 0]);
+  const sLow  = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [sh0, ss0, sv0, 0]);
+  const sHigh = new cv.Mat(hsv.rows, hsv.cols, hsv.type(), [sh1, ss1, sv1, 0]);
+
+  const maskG = new cv.Mat();
+  const maskS = new cv.Mat();
+  cv.inRange(hsv, gLow, gHigh, maskG);
+  cv.inRange(hsv, sLow, sHigh, maskS);
+
+  // 形态学
+  if (erodeK > 0 || dilateK > 0) {
+    const kernel = cv.getStructuringElement(cv.MORPH_ELLIPSE, new cv.Size(3, 3));
+    if (erodeK > 0) cv.erode(maskG, maskG, kernel, new cv.Point(-1, -1), erodeK);
+    if (dilateK > 0) cv.dilate(maskG, maskG, kernel, new cv.Point(-1, -1), dilateK);
+    kernel.delete();
+  }
+
+  const greenArea = cv.countNonZero(maskG);
+  const rate = roiArea > 0 ? (greenArea / roiArea * 100) : 0;
+
+  // 土壤仅显示（排除绿色）
+  const maskGInv = new cv.Mat();
+  cv.bitwise_not(maskG, maskGInv);
+  const maskSOnly = new cv.Mat();
+  cv.bitwise_and(maskS, maskGInv, maskSOnly);
+  maskGInv.delete();
+
+  // 构建标注图 (RGBA)
+  const overlay = crop.clone();
+  // 绿色像素 → 绿色
+  overlay.setTo(new cv.Scalar(0, 255, 0, 255), maskG);
+  // 土壤像素 → 蓝色
+  overlay.setTo(new cv.Scalar(200, 120, 0, 255), maskSOnly);
+
+  const annotated = new cv.Mat();
+  cv.addWeighted(crop, 0.4, overlay, 0.6, 0, annotated);
+
+  // 如果裁剪了，贴回原图位置
+  let fullAnnotated;
+  if (roi) {
+    fullAnnotated = srcMat.clone();
+    annotated.copyTo(fullAnnotated.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h)));
+    // 画 ROI 框
+    const pt1 = new cv.Point(roi.x, roi.y);
+    const pt2 = new cv.Point(roi.x + roi.w, roi.y + roi.h);
+    cv.rectangle(fullAnnotated, pt1, pt2, new cv.Scalar(0, 200, 255, 255), 3);
+  } else {
+    fullAnnotated = annotated.clone();
+  }
+
+  // 清理
+  hsv.delete(); gLow.delete(); gHigh.delete(); sLow.delete(); sHigh.delete();
+  maskS.delete(); maskSOnly.delete(); overlay.delete();
+  if (roi) { crop.delete(); annotated.delete(); }
+
+  return { rate, greenArea, roiArea, maskG, fullAnnotated };
+}
+
+// ==================== 账户系统 (localStorage) ====================
+const ACCOUNTS_KEY = "germ_accounts";
+const AUTH_KEY = "germ_auth_user";
+
+let authMode = "login";   // "login" | "register"
+let currentUser = null;   // 当前登录的用户名
+let authCallback = null;  // 验证成功后的回调
+
+function getAccounts() {
+  try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || "{}"); }
+  catch(e) { return {}; }
+}
+function saveAccounts(acc) { localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(acc)); }
+
+// 简单哈希 (SHA-256) — 用于密码存储
+async function hash(str) {
+  const data = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,"0")).join("");
+}
+
+function isAuthenticated() { return currentUser !== null; }
+
+function showAuth(callback) {
+  if (isAuthenticated()) { if (callback) callback(); return; }
+  authCallback = callback;
+  authMode = "login";
+  updateAuthUI();
+  document.getElementById("pwOverlay").classList.add("show");
+  document.getElementById("pwUser").value = "";
+  document.getElementById("pwPass").value = "";
+  document.getElementById("pwErr").textContent = "";
+  document.getElementById("pwUser").focus();
+}
+
+function closeAuth() {
+  document.getElementById("pwOverlay").classList.remove("show");
+  authCallback = null;
+}
+
+function toggleAuthMode() {
+  authMode = authMode === "login" ? "register" : "login";
+  updateAuthUI();
+  document.getElementById("pwErr").textContent = "";
+}
+
+function updateAuthUI() {
+  if (authMode === "login") {
+    document.getElementById("pwTitle").textContent = "🔐 登录";
+    document.getElementById("pwSub").textContent = "输入账号密码查看检测结果";
+    document.getElementById("pwBtnOk").textContent = "登录";
+    document.getElementById("pwBtnAlt").textContent = "注册新账号";
+  } else {
+    document.getElementById("pwTitle").textContent = "📝 注册";
+    document.getElementById("pwSub").textContent = "创建新账号（数据独立存储）";
+    document.getElementById("pwBtnOk").textContent = "注册";
+    document.getElementById("pwBtnAlt").textContent = "已有账号？登录";
+  }
+}
+
+async function handleAuth() {
+  const user = document.getElementById("pwUser").value.trim();
+  const pass = document.getElementById("pwPass").value;
+  const errEl = document.getElementById("pwErr");
+
+  if (!user || !pass) { errEl.textContent = "❌ 用户名和密码不能为空"; return; }
+  if (user.length < 2) { errEl.textContent = "❌ 用户名至少 2 个字符"; return; }
+  if (pass.length < 3) { errEl.textContent = "❌ 密码至少 3 位"; return; }
+
+  const accounts = getAccounts();
+  const passHash = await hash(pass);
+
+  if (authMode === "register") {
+    if (accounts[user]) { errEl.textContent = "❌ 该用户名已被注册"; return; }
+    accounts[user] = passHash;
+    saveAccounts(accounts);
+    loginSuccess(user);
+  } else {
+    if (!accounts[user]) { errEl.textContent = "❌ 用户名不存在"; return; }
+    if (accounts[user] !== passHash) { errEl.textContent = "❌ 密码错误"; return; }
+    loginSuccess(user);
+  }
+}
+
+function loginSuccess(user) {
+  currentUser = user;
+  sessionStorage.setItem(AUTH_KEY, user);
+  document.getElementById("pwOverlay").classList.remove("show");
+  document.getElementById("userBadge").style.display = "inline";
+  document.getElementById("userName").textContent = user;
+  document.getElementById("logoutLink").style.display = "inline";
+  toast(authMode === "register" ? "✅ 注册成功！" : "✅ 登录成功！");
+  loadHistory();
+  const cb = authCallback;
+  authCallback = null;
+  if (cb) cb();
+}
+
+function logout() {
+  currentUser = null;
+  sessionStorage.removeItem(AUTH_KEY);
+  document.getElementById("userBadge").style.display = "none";
+  document.getElementById("logoutLink").style.display = "none";
+  document.getElementById("rateDisplay").textContent = "--";
+  document.getElementById("greenPx").textContent = "-";
+  document.getElementById("trayPx").textContent = "-";
+  document.getElementById("btnSave").disabled = true;
+  lastResult = null;
+  loadHistory();
+  toast("👋 已退出");
+}
+
+// 页面加载时恢复登录状态
+function restoreAuth() {
+  const saved = sessionStorage.getItem(AUTH_KEY);
+  if (saved) {
+    const accounts = getAccounts();
+    if (accounts[saved]) {
+      currentUser = saved;
+      document.getElementById("userBadge").style.display = "inline";
+      document.getElementById("userName").textContent = saved;
+      document.getElementById("logoutLink").style.display = "inline";
+    }
+  }
+}
+
+// 回车提交
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("pwPass").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") handleAuth();
+  });
+});==
+function analyze() {
+  if (!isAuthenticated()) { showAuth(() => analyze()); return; }
+  if (!srcMat || srcMat.empty()) return;
+  const loader = document.getElementById("loader");
+  loader.classList.add("show");
+  document.getElementById("loaderMsg").textContent = "分析中...";
+  document.getElementById("btnAnalyze").disabled = true;
+
+  // 使用 setTimeout 让 loading UI 先渲染
+  setTimeout(() => {
+    try {
+      // 清理上一次结果的 Mat 对象
+      if (lastResult) {
+        try { lastResult.maskG.delete(); } catch(e) {}
+        try { lastResult.fullAnnotated.delete(); } catch(e) {}
+      }
+      const result = detect();
+      if (!result) { throw new Error("检测失败"); }
+      lastResult = result;
+      showResult(result);
+      document.getElementById("btnSave").disabled = false;
+    } catch (e) {
+      alert("❌ 检测出错: " + e.message);
+      console.error(e);
+    }
+    loader.classList.remove("show");
+    document.getElementById("btnAnalyze").disabled = false;
+  }, 50);
+}
+
+function showResult(result) {
+  document.getElementById("rateDisplay").textContent = result.rate.toFixed(1) + "%";
+  document.getElementById("greenPx").textContent = result.greenArea.toLocaleString();
+  document.getElementById("trayPx").textContent = result.roiArea.toLocaleString();
+
+  // 显示标注图
+  const cvs = document.createElement("canvas");
+  cvs.width = result.fullAnnotated.cols;
+  cvs.height = result.fullAnnotated.rows;
+  if (currentView === "overlay") {
+    cv.imshow(cvs, result.fullAnnotated);
+  } else {
+    // 掩膜视图：将 maskG 扩展到全图
+    if (roi) {
+      const fullMask = new cv.Mat(srcMat.rows, srcMat.cols, cv.CV_8UC1, new cv.Scalar(0));
+      result.maskG.copyTo(fullMask.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h)));
+      cv.imshow(cvs, fullMask);
+      fullMask.delete();
+    } else {
+      cv.imshow(cvs, result.maskG);
+    }
+  }
+
+  const srcImgEl = document.getElementById("srcImg");
+  srcImgEl.src = cvs.toDataURL("image/png");
+  srcImgEl.style.display = "block";
+  // 更新 srcMat
+  srcImgEl.onload = () => {
+    if (srcMat) srcMat.delete();
+    srcMat = cv.imread(srcImgEl);
+    const roiCvs = document.getElementById("roiCvs");
+    roiCvs.width = srcImgEl.clientWidth;
+    roiCvs.height = srcImgEl.clientHeight;
+    imgScale = srcImgEl.clientWidth / srcImgEl.naturalWidth;
+  };
+  document.getElementById("placeholder").style.display = "none";
+}
+
+// ==================== 视图切换 ====================
+function switchView(view) {
+  currentView = view;
+  document.getElementById("btnOverlay").classList.toggle("active", view === "overlay");
+  document.getElementById("btnMask").classList.toggle("active", view === "mask");
+  document.getElementById("viewLabel").textContent = view === "overlay" ? "📷 检测结果" : "🎭 绿色掩膜";
+  if (lastResult) showResult(lastResult);
+}
+
+// ==================== 滑块 ====================
+function bindSliders() {
+  const ids = ["gh0","gh1","gs0","gs1","gv0","gv1","sh0","sh1","ss0","ss1","sv0","sv1","erode","dilate"];
+  ids.forEach(id => document.getElementById(id).addEventListener("input", updateSliderLabels));
+  updateSliderLabels();
+}
+function updateSliderLabels() {
+  const pairs = [["gh0","gh1","ghV"],["gs0","gs1","gsV"],["gv0","gv1","gvV"],
+                 ["sh0","sh1","shV"],["ss0","ss1","ssV"],["sv0","sv1","svV"]];
+  pairs.forEach(([a,b,l]) => {
+    document.getElementById(l).textContent = document.getElementById(a).value + "-" + document.getElementById(b).value;
+  });
+  document.getElementById("erodeV").textContent = document.getElementById("erode").value;
+  document.getElementById("dilateV").textContent = document.getElementById("dilate").value;
+}
+function resetParams() {
+  const defs = {gh0:28,gh1:85,gs0:25,gs1:180,gv0:45,gv1:220,
+                sh0:0,sh1:32,ss0:8,ss1:255,sv0:10,sv1:255,erode:1,dilate:2};
+  Object.entries(defs).forEach(([k,v]) => document.getElementById(k).value = v);
+  updateSliderLabels();
+  if (srcMat) analyze();
+}
+
+// ==================== 历史记录 (localStorage, 按账户隔离) ====================
+function getHistoryKey() { return currentUser ? "germ_hist_" + currentUser : "germ_hist_anonymous"; }
+function getHistory() {
+  if (!currentUser) return [];
+  try { return JSON.parse(localStorage.getItem(getHistoryKey()) || "[]"); }
+  catch(e) { return []; }
+}
+function saveRecord() {
+  if (!isAuthenticated()) { showAuth(() => saveRecord()); return; }
+  if (!lastResult) return;
+  const hist = getHistory();
+  const now = new Date();
+  hist.push({
+    time: now.toLocaleString("zh-CN"),
+    rate: lastResult.rate,
+    green: lastResult.greenArea,
+    tray: lastResult.roiArea,
+  });
+  if (hist.length > 100) hist.splice(0, hist.length - 100);
+  localStorage.setItem(getHistoryKey(), JSON.stringify(hist));
+  loadHistory();
+  toast("✅ 已保存");
+}
+function loadHistory() {
+  const hist = getHistory();
+  renderTable(hist);
+  drawChart(hist);
+}
+function renderTable(records) {
+  const tbody = document.querySelector("#histTbl tbody");
+  tbody.innerHTML = "";
+  records.slice().reverse().slice(0, 30).forEach(r => {
+    tbody.innerHTML += `<tr><td>${r.time.slice(-8)}</td><td><strong>${r.rate.toFixed(1)}%</strong></td><td>${r.green.toLocaleString()}</td><td>${r.tray.toLocaleString()}</td></tr>`;
+  });
+}
+function drawChart(records) {
+  const cvs = document.getElementById("chartCvs");
+  const ctx = cvs.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = cvs.parentElement.clientWidth;
+  const h = 160;
+  cvs.width = w * dpr; cvs.height = h * dpr;
+  cvs.style.width = w + "px"; cvs.style.height = h + "px";
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  if (records.length < 2) {
+    ctx.fillStyle = "#888"; ctx.font = "13px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(records.length ? "至少2条数据" : "暂无数据", w/2, h/2);
+    return;
+  }
+
+  const rates = records.map(r => r.rate);
+  const maxR = Math.max(...rates, 5), minR = Math.min(...rates, 0);
+  const range = maxR - minR || 1;
+  const pad = {t:18,r:16,b:28,l:42};
+  const pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+
+  ctx.strokeStyle = "#2a2d3a"; ctx.lineWidth = 0.5;
+  for (let i=0; i<=4; i++) {
+    const y = pad.t + ph/4*i;
+    ctx.beginPath(); ctx.moveTo(pad.l, y); ctx.lineTo(w-pad.r, y); ctx.stroke();
+    ctx.fillStyle = "#666"; ctx.font = "9px sans-serif"; ctx.textAlign = "right";
+    ctx.fillText((maxR - range/4*i).toFixed(0)+"%", pad.l-6, y+3);
+  }
+
+  ctx.beginPath(); ctx.strokeStyle = "#4ade80"; ctx.lineWidth = 2.5; ctx.lineJoin = "round";
+  records.forEach((r,i) => {
+    const x = pad.l + pw/(records.length-1)*i;
+    const y = pad.t + ph - (r.rate-minR)/range*ph;
+    i===0 ? ctx.moveTo(x,y) : ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  ctx.lineTo(pad.l+pw, pad.t+ph); ctx.lineTo(pad.l, pad.t+ph); ctx.closePath();
+  const grad = ctx.createLinearGradient(0,pad.t,0,pad.t+ph);
+  grad.addColorStop(0,"rgba(74,222,128,0.2)"); grad.addColorStop(1,"rgba(74,222,128,0.02)");
+  ctx.fillStyle = grad; ctx.fill();
+
+  records.forEach((r,i) => {
+    const x = pad.l + pw/(records.length-1)*i;
+    const y = pad.t + ph - (r.rate-minR)/range*ph;
+    ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle = "#4ade80"; ctx.fill();
+    ctx.strokeStyle = "#fff"; ctx.lineWidth = 1; ctx.stroke();
+  });
+}
+
+function exportCSV() {
+  if (!isAuthenticated()) { showAuth(() => exportCSV()); return; }
+  const hist = getHistory();
+  if (!hist.length) { alert("暂无数据"); return; }
+  let csv = "时间,出芽率%,绿色像素,苗盘像素\n";
+  hist.forEach(r => csv += `${r.time},${r.rate.toFixed(1)},${r.green},${r.tray}\n`);
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "germination_data.csv";
+  a.click();
+}
+
+// ==================== 工具 ====================
+function toast(msg) {
+  const el = document.getElementById("toast");
+  el.textContent = msg; el.classList.add("show");
+  setTimeout(() => el.classList.remove("show"), 2000);
+}
+
+// Service Worker 注册
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("./sw.js").catch(() => {});
+}
+
+// 响应窗口大小变化重绘图表
+window.addEventListener("resize", () => drawChart(getHistory()));
+</script>
+</body>
+</html>

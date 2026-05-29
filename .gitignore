@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+py/
+
+# 图片和数据
+ceshi.jpg
+sample.png
+*.csv
+
+# Web app (Flask 版本)
+webapp/
+
+# IDE
+.idea/
