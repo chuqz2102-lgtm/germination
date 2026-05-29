@@ -1,0 +1,14 @@
+{
+  "name": "出芽率智能检测",
+  "short_name": "出芽率检测",
+  "description": "基于 HSV 颜色检测的育苗盘出芽率估算工具",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f1117",
+  "theme_color": "#22c55e",
+  "orientation": "any",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
