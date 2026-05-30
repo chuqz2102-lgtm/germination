@@ -1,8 +1,12 @@
 name: Build Android APK
+
 on:
+  workflow_dispatch:  # 手动触发
   push:
     branches: [main]
-  workflow_dispatch:
+    paths:
+      - 'docs/**'
+      - 'android_app/**'
 
 jobs:
   build:
@@ -12,23 +16,29 @@ jobs:
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        with: { node-version: "20" }
+        with:
+          node-version: '20'
 
       - name: Setup Java
         uses: actions/setup-java@v4
-        with: { distribution: "temurin", java-version: "17" }
+        with:
+          distribution: 'temurin'
+          java-version: '17'
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with: { packages: "platforms;android-34 build-tools;34.0.0" }
 
-      - name: Install Capacitor & Build Web
-        working-directory: ./android_app
-        run: npm install && npx cap sync android
+      - name: Install Capacitor dependencies
+        run: |
+          cd android_app
+          npm install
+          npx cap sync android
 
       - name: Build APK
-        working-directory: ./android_app/android
-        run: ./gradlew assembleDebug
+        run: |
+          cd android_app/android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
