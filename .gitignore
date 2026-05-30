@@ -8,6 +8,10 @@ ceshi.jpg
 sample.png
 *.csv
 
+# Android
+android_app/node_modules/
+android_app/android/
+
 # Web app (Flask 版本)
 webapp/
 
