@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>CV Test</title></head>
+<body>
+<h1>OpenCV.js Test</h1>
+<p id="status">Testing...</p>
+<script>
+window.module = { exports: {} };
+</script>
+<script src="opencv.js" onload="test()" onerror="alert('FAILED TO LOAD')"></script>
+<script>
+function test() {
+  var s = document.getElementById("status");
+  s.textContent = "opencv.js loaded. Checking cv...";
+  
+  // Check window.module.exports
+  if (window.module && window.module.exports) {
+    s.textContent += "\nmodule.exports found";
+    window.cv = window.module.exports;
+  }
+  
+  if (typeof cv !== "undefined") {
+    s.textContent += "\ncv type: " + typeof cv;
+    if (cv.Mat) s.textContent += "\ncv.Mat: OK ✅";
+    else s.textContent += "\ncv.Mat: NOT READY (WASM compiling...)";
+  } else {
+    s.textContent += "\ncv: UNDEFINED ❌";
+  }
+}
+</script>
+</body></html>

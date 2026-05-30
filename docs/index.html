@@ -235,7 +235,11 @@ let roiStart = null;
 let imgScale = 1;          // 显示缩放比
 
 // ==================== OpenCV 加载 ====================
+// 桥接：让 opencv.js 的 module.exports 输出到 window.cv
+window.module = { exports: {} };
+
 function onOpenCvReady() {
+  if (document.getElementById("cv-status").textContent.includes("✅")) return;
   document.getElementById("cv-status").textContent = "✅ OpenCV.js 就绪";
   document.getElementById("cv-status").classList.add("done");
   document.getElementById("mainUI").style.opacity = "1";
@@ -246,27 +250,23 @@ function onOpenCvReady() {
   loadHistory();
 }
 
-// OpenCV.js 加载脚本
 (function() {
-  const script = document.createElement("script");
-  script.src = "opencv.js";  // 本地自托管，零外部依赖
-  script.async = true;
-  script.onload = () => {
-    // OpenCV.js 设置回调后异步初始化，轮询等待
-    if (cv.getBuildInformation) { onOpenCvReady(); return; }
-    cv["onRuntimeInitialized"] = onOpenCvReady;
-    // 兜底轮询
-    let tries = 0;
-    const ival = setInterval(() => {
-      if (cv.Mat) { clearInterval(ival); onOpenCvReady(); }
-      if (++tries > 200) { clearInterval(ival);
-        document.getElementById("cv-status").textContent = "❌ OpenCV.js 加载失败，请刷新页面"; }
-    }, 200);
-  };
-  script.onerror = () => {
-    document.getElementById("cv-status").innerHTML = "❌ 网络不通，OpenCV.js 加载失败。<br>请确保已联网后刷新页面。";
-  };
-  document.head.appendChild(script);
+  var s = document.createElement("script");
+  s.src = "opencv.js";
+  s.async = true;
+  s.addEventListener("load", function() {
+    // 桥接：从 module.exports 取 cv 对象
+    if (!window.cv && window.module.exports) {
+      window.cv = window.module.exports;
+    }
+    if (typeof cv !== "undefined" && cv.Mat) { onOpenCvReady(); return; }
+    // 异步初始化等待
+    cv.onRuntimeInitialized = onOpenCvReady;
+  });
+  s.addEventListener("error", function() {
+    document.getElementById("cv-status").textContent = "❌ 加载失败";
+  });
+  document.head.appendChild(s);
 })();
 
 // ==================== 图片加载 ====================
