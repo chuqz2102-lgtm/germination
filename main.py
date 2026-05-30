@@ -1,5 +1,5 @@
 """
-Germination Check — 出芽率实时检测（左图右参 + 底部滑块可调）
+Germination Check — 覆盖率实时检测（左图右参 + 底部滑块可调）
 """
 
 import cv2
@@ -45,7 +45,7 @@ def record_data(rate, green_area, soil_area):
     with open(DATA_FILE, "a", newline="") as f:
         w = csv.writer(f)
         if header:
-            w.writerow(["时间", "出芽率%", "绿色像素", "土壤像素"])
+            w.writerow(["时间", "覆盖率%", "绿色像素", "土壤像素"])
         w.writerow([now, f"{rate:.1f}", green_area, soil_area])
 
 
@@ -155,7 +155,7 @@ def main():
     img_area_w = WIN_W - PANEL_W
     img_area_h = WIN_H - 150  # 留 150px 给滑块
 
-    print("=== Germination Check 出芽率实时检测 ===")
+    print("=== Germination Check 覆盖率实时检测 ===")
     print("  拖动底部滑块实时调参")
     print("  c    拍照记录")
     print("  s    保存当前参数到文件")
@@ -246,7 +246,7 @@ def main():
         elif key == ord('c'):
             record_data(rate, green_area, soil_area)
             saved_flash = 15
-            print(f"📸 记录: 出芽率 {rate:.1f}%")
+            print(f"📸 记录: 覆盖率 {rate:.1f}%")
         elif key == ord('s'):
             print("\n=== 保存到 detector.py ===")
             print(f'GREEN_LOW  = np.array([{g_h_min}, {G_S[0]}, {G_V[0]}])')

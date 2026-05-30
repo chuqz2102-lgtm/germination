@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
-<title>🌱 出芽率检测</title>
+<title>🌱 覆盖率检测</title>
 <link rel="manifest" href="./manifest.json">
 <meta name="theme-color" content="#22c55e">
 <style>
@@ -128,7 +128,7 @@ body{
 <body>
 <div class="app" id="app">
   <div class="header">
-    <h1>🌱 出芽率智能检测</h1>
+    <h1>🌱 覆盖率智能检测</h1>
     <div class="subtitle">
       Germination Rate · PWA
       <span id="userBadge" style="display:none;margin-left:8px;color:var(--green);font-size:.85em;">| 👤 <span id="userName"></span></span>
@@ -168,7 +168,7 @@ body{
 
     <div class="panel panel-ctrl">
       <div class="res-card">
-        <div class="rate-big" id="rateDisplay">--</div><div class="rate-label">出芽率</div>
+        <div class="rate-big" id="rateDisplay">--</div><div class="rate-label">覆盖率</div>
         <div class="stats">
           <div class="stat"><span class="dot g"></span>绿色 <strong id="greenPx">-</strong> px</div>
           <div class="stat"><span class="dot b"></span>苗盘 <strong id="trayPx">-</strong> px</div>
@@ -201,7 +201,7 @@ body{
       <button class="btn btn-sm" onclick="exportCSV()">📥 导出CSV</button></div>
     </div>
     <div class="chart-wrap"><canvas id="chartCvs"></canvas></div>
-    <div class="tbl-wrap"><table id="histTbl"><thead><tr><th>时间</th><th>出芽率</th><th>绿色</th><th>苗盘</th></tr></thead><tbody></tbody></table></div>
+    <div class="tbl-wrap"><table id="histTbl"><thead><tr><th>时间</th><th>覆盖率</th><th>绿色</th><th>苗盘</th></tr></thead><tbody></tbody></table></div>
   </div>
 </div>
 
@@ -839,7 +839,7 @@ function exportCSV() {
   if (!isAuthenticated()) { showAuth(() => exportCSV()); return; }
   const hist = getHistory();
   if (!hist.length) { alert("暂无数据"); return; }
-  let csv = "时间,出芽率%,绿色像素,苗盘像素\n";
+  let csv = "时间,覆盖率%,绿色像素,苗盘像素\n";
   hist.forEach(r => csv += `${r.time},${r.rate.toFixed(1)},${r.green},${r.tray}\n`);
   const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
   const a = document.createElement("a");

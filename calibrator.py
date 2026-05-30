@@ -57,7 +57,7 @@ def build_panel(h_panel, g_h_min, g_h_max, s_h_min, s_h_max,
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
     y += 40
 
-    # 出芽率大字
+    # 覆盖率大字
     cv2.putText(panel, f"{rate:.1f}%", (10, y),
                 cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3)
     cv2.putText(panel, "Germination Rate", (10, y + 25),

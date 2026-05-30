@@ -1,5 +1,5 @@
 """
-出芽率检测核心模块 — 可复制到主程序里直接调用
+覆盖率检测核心模块 — 可复制到主程序里直接调用
 """
 
 import cv2
@@ -24,7 +24,7 @@ def calc_germination_rate(frame,
                           erode_k=ERODE_K, dilate_k=DILATE_K):
     """
     输入：BGR 图像帧（numpy array）
-    返回：(出芽率%, 绿色面积px, 土壤面积px, 绿色掩膜, 标注图)
+    返回：(覆盖率%, 绿色面积px, 土壤面积px, 绿色掩膜, 标注图)
     """
     hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
@@ -45,7 +45,7 @@ def calc_germination_rate(frame,
     soil_area = cv2.countNonZero(mask_soil_only)
     total_area = green_area + soil_area
 
-    # 正确公式：出芽率 = 绿色面积 / (绿色+土壤) × 100%
+    # 正确公式：覆盖率 = 绿色面积 / (绿色+土壤) × 100%
     # 这样即使绿色完全覆盖土壤，分母也不会缩小
     rate = (green_area / total_area * 100) if total_area > 0 else 0.0
 
@@ -64,7 +64,7 @@ def calc_germination_rate(frame,
 
 
 def calc_from_file(image_path, **kwargs):
-    """从图片文件计算出芽率"""
+    """从图片文件计算覆盖率"""
     img = cv2.imread(image_path)
     if img is None:
         raise FileNotFoundError(f"无法读取图片: {image_path}")
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     rate, ga, sa, mask, anno = calc_from_file(sys.argv[1])
-    print(f"出芽率: {rate:.1f}%  绿色={ga}px  土壤={sa}px")
+    print(f"覆盖率: {rate:.1f}%  绿色={ga}px  土壤={sa}px")
 
     cv2.imshow("Result", anno)
     cv2.waitKey(0)

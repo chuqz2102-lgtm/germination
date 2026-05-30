@@ -1,5 +1,5 @@
-"""
-出芽率检测桌面应用 — tkinter 原生 GUI，完全离线，无需浏览器
+﻿"""
+覆盖率检测桌面应用 — tkinter 原生 GUI，完全离线，无需浏览器
 运行: python desktop_app.py
 可打包为 .exe: pyinstaller --onefile --windowed desktop_app.py
 """
@@ -82,7 +82,7 @@ def detect(frame, params, roi=None):
 class GerminationApp:
     def __init__(self):
         self.root = tk.Tk()
-        self.root.title("🌱 出芽率智能检测")
+        self.root.title("🌱 覆盖率智能检测")
         self.root.geometry("1100x780")
         self.root.minsize(900, 600)
         self.root.configure(bg="#0f1117")
@@ -186,7 +186,7 @@ class GerminationApp:
         self.rate_label = tk.Label(result_card, text="--", bg="#1a2a1a", fg="#4ade80",
                                    font=("微软雅黑", 44, "bold"))
         self.rate_label.pack(pady=(16, 0))
-        tk.Label(result_card, text="出芽率", bg="#1a2a1a", fg="#888",
+        tk.Label(result_card, text="覆盖率", bg="#1a2a1a", fg="#888",
                  font=("微软雅黑", 10)).pack()
 
         stats_frame = tk.Frame(result_card, bg="#1a2a1a")
@@ -255,7 +255,7 @@ class GerminationApp:
         columns = ("time", "rate", "green", "tray")
         self.tree = ttk.Treeview(self.history_frame, columns=columns, show="headings", height=5)
         self.tree.heading("time", text="时间")
-        self.tree.heading("rate", text="出芽率")
+        self.tree.heading("rate", text="覆盖率")
         self.tree.heading("green", text="绿色 px")
         self.tree.heading("tray", text="苗盘 px")
         self.tree.column("time", width=120, anchor="center")
@@ -440,7 +440,7 @@ class GerminationApp:
         with open(DATA_FILE, "a", newline="", encoding="utf-8") as f:
             w = csv.writer(f)
             if header:
-                w.writerow(["时间", "出芽率%", "绿色像素", "苗盘像素"])
+                w.writerow(["时间", "覆盖率%", "绿色像素", "苗盘像素"])
             w.writerow([now, str(self.last_result["rate"]),
                         self.last_result["green_area"], self.last_result["roi_area"]])
         self._load_history()
@@ -455,7 +455,7 @@ class GerminationApp:
             reader = csv.DictReader(f)
             for row in list(reader)[-30:]:
                 self.tree.insert("", 0,
-                    values=(row.get("时间", "")[-8:], row.get("出芽率%", "") + "%",
+                    values=(row.get("时间", "")[-8:], row.get("覆盖率%", "") + "%",
                             row.get("绿色像素", ""), row.get("苗盘像素", row.get("土壤像素", ""))))
 
     def _export_csv(self):
